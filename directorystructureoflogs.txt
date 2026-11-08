@@ -1,0 +1,102 @@
+/upload/ftp/CASE_ID/NetScalerConsole]$ lr
+total 20
+drwxrwxrwx  5 upload  upload   4.0K Nov  X XX:XX .
+drwxrwxrwx  5 upload  upload   4.0K Nov  X XX:XX ..
+drwxrwxrwx  8 upload  upload   4.0K Nov  X XX:XX NetScaler_Console_IP_ADDRESS_VERSION_DATE_TIME.mps
+
+./NetScaler_Console_IP_ADDRESS_VERSION_DATE_TIME.mps:
+total 32
+drwxrwxrwx   8 upload  upload   4.0K Nov  X XX:XX .
+drwxrwxrwx   5 upload  upload   4.0K Nov  X XX:XX ..
+drwxrwxrwx   2 upload  upload   4.0K Nov  X XX:XX etc
+drwxrwxrwx   2 upload  upload   4.0K Nov  X XX:XX mps
+drwxrwxrwx   3 upload  upload   4.0K Nov  X XX:XX mpsconfig
+drwxrwxrwx   2 upload  upload   4.0K Nov  X XX:XX nodes
+drwxrwxrwx   2 upload  upload   4.0K Nov  X XX:XX shell
+drwxrwxrwx  12 upload  upload   4.0K Nov  X XX:XX var
+
+./NetScaler_Console_IP_ADDRESS_VERSION_DATE_TIME.mps/etc:
+total 72
+drwxrwxrwx  2 upload  upload   4.0K Nov  X XX:XX .
+drwxrwxrwx  8 upload  upload   4.0K Nov  X XX:XX ..
+-rwxrwxrwx  1 upload  upload    38B Oct XX XX:XX hosts
+-rwxrwxrwx  1 upload  upload   250B Nov  X XX:XX ntp.conf
+-rwxrwxrwx  1 upload  upload    22B Nov  X XX:XX resolv.conf
+
+./NetScaler_Console_IP_ADDRESS_VERSION_DATE_TIME.mps/mps:
+total 332
+drwxrwxrwx  2 upload  upload   4.0K Nov  X XX:XX .
+drwxrwxrwx  8 upload  upload   4.0K Nov  X XX:XX ..
+-rwxrwxrwx  1 upload  upload    11B Aug XX XX:XX version.conf
+
+./NetScaler_Console_IP_ADDRESS_VERSION_DATE_TIME.mps/shell:
+total 37756
+drwxrwxrwx  2 upload  upload   4.0K Nov  X XX:XX .
+drwxrwxrwx  8 upload  upload   4.0K Nov  X XX:XX ..
+-rwxrwxrwx  1 upload  upload   441B Nov  X XX:XX arp-a.out
+-rwxrwxrwx  1 upload  upload   573B Nov  X XX:XX df-akin.out
+-rwxrwxrwx  1 upload  upload   715K Nov  X XX:XX disk_usage.txt
+-rwxrwxrwx  1 upload  upload    92K Nov  X XX:XX dmesg-a.out
+-rwxrwxrwx  1 upload  upload   730B Nov  X XX:XX ifconfig-a.out
+-rwxrwxrwx  1 upload  upload   222K Nov  X XX:XX netstat-an.out
+-rwxrwxrwx  1 upload  upload   750B Nov  X XX:XX netstat-rn.out
+-rwxrwxrwx  1 upload  upload    50K Nov  X XX:XX ps-aluxwr.out
+-rwxrwxrwx  1 upload  upload   217K Nov  X XX:XX sysctl-a.out
+-rwxrwxrwx  1 upload  upload   9.0K Nov  X XX:XX top-b.out
+-rwxrwxrwx  1 upload  upload   203B Nov  X XX:XX uname-a.out
+-rwxrwxrwx  1 upload  upload    69B Nov  X XX:XX uptime.out
+
+./NetScaler_Console_IP_ADDRESS_VERSION_DATE_TIME.mps/var:
+total 56
+drwxrwxrwx  12 upload  upload   4.0K Nov  X XX:XX .
+drwxrwxrwx   8 upload  upload   4.0K Nov  X XX:XX ..
+drwxrwxrwx   2 upload  upload   4.0K Nov  X XX:XX core
+drwxrwxrwx   2 upload  upload   4.0K Nov  X XX:XX crash
+drwxrwxrwx   2 upload  upload    12K Nov  X XX:XX log
+drwxrwxrwx  11 upload  upload   4.0K Nov  X XX:XX mps
+drwxrwxrwx   2 upload  upload   4.0K Nov  X XX:XX nslog
+drwxrwxrwx   3 upload  upload   4.0K Nov  X XX:XX sdc
+
+./NetScaler_Console_IP_ADDRESS_VERSION_DATE_TIME.mps/var/log:
+total 92148
+drwxrwxrwx   2 upload  upload    12K Nov  X XX:XX .
+drwxrwxrwx  12 upload  upload   4.0K Nov  X XX:XX ..
+-rwxrwxrwx   1 upload  upload    70K Nov  X XX:XX auth.log
+-rwxrwxrwx   1 upload  upload    80M Nov  X XX:XX messages
+-rwxrwxrwx   1 upload  upload    77K Nov  X XX:XX messages.0.gz
+-rwxrwxrwx   1 upload  upload   859K Nov  X XX:XX ns.log
+
+./NetScaler_Console_IP_ADDRESS_VERSION_DATE_TIME.mps/var/mps:
+total 8028
+drwxrwxrwx  11 upload  upload   4.0K Nov  X XX:XX .
+drwxrwxrwx  12 upload  upload   4.0K Nov  X XX:XX ..
+-rwxrwxrwx   1 upload  upload   7.6M Nov  X XX:XX adm_db_schema_dump.sql
+drwxrwxrwx   7 upload  upload    68K Nov  X XX:XX log
+drwxrwxrwx   2 upload  upload    20K Nov  X XX:XX mpsdb
+drwxrwxrwx   2 upload  upload   4.0K Nov  X XX:XX nstelemetry
+drwxrwxrwx   2 upload  upload    12K Nov  X XX:XX pg_catalog
+drwxrwxrwx   2 upload  upload   4.0K Nov  X XX:XX system_health
+
+./NetScaler_Console_IP_ADDRESS_VERSION_DATE_TIME.mps/var/mps/log:
+total 4444408
+drwxrwxrwx   7 upload  upload    68K Nov  X XX:XX .
+drwxrwxrwx  11 upload  upload   4.0K Nov  X XX:XX ..
+-rwxrwxrwx   1 upload  upload   4.7M Nov  X XX:XX admsysinfo_console.log
+-rwxrwxrwx   1 upload  upload    20M Nov  X XX:XX mps_event.log
+-rwxrwxrwx   1 upload  upload    48M Nov  X XX:XX mps_inventory.log
+-rwxrwxrwx   1 upload  upload    43M Nov  X XX:XX mps_service.log
+-rwxrwxrwx   1 upload  upload    33M Nov  X XX:XX nstelemetry.log
+-rwxrwxrwx   1 upload  upload    42M Nov  X XX:XX pgxl_node_client.py.log
+
+./NetScaler_Console_IP_ADDRESS_VERSION_DATE_TIME.mps/var/mps/nstelemetry:
+total 8
+drwxrwxrwx   2 upload  upload   4.0K Nov  X XX:XX .
+drwxrwxrwx  11 upload  upload   4.0K Nov  X XX:XX ..
+-rwxrwxrwx   1 upload  upload    10B Nov  X XX:XX telemetry_execution_token.txt
+-rwxrwxrwx   1 upload  upload    11B Nov  X XX:XX version.conf
+
+./NetScaler_Console_IP_ADDRESS_VERSION_DATE_TIME.mps/var/sdc/log:
+total 36
+drwxrwxrwx  2 upload  upload   4.0K Nov  X XX:XX .
+drwxrwxrwx  3 upload  upload   4.0K Nov  X XX:XX ..
+-rwxrwxrwx  1 upload  upload    20K Oct XX XX:XX sdc.log
