@@ -39,7 +39,7 @@ sysinfo() {
             HW_TYPE="BLX"
             echo "[Type]     : NetScaler BLX (Linux BareMetal)"
         else
-            # Try to grab hardware from showcmds (show hardware)
+            # Grab hardware from showcmds (show hardware)
             local hw=""
             if [ -n "$SHOWCMDS" ]; then
                 hw=$(awk '/^> show hardware/{flag=1; next} /^(>|root@)/{if(flag) {flag=0; exit}} flag' "$SHOWCMDS" 2>/dev/null | grep -i "Platform:" | cut -d ':' -f 2 | xargs)
@@ -59,15 +59,15 @@ sysinfo() {
             [ -n "$hw" ] && echo "[Model]    : $hw"
         fi
         
-        # 🆕 Grab Version exactly from 'show version' in showcmds.txt
+        # Grab Version exactly from 'show version' in showcmds.txt
         local ADC_VER=""
         if [ -n "$SHOWCMDS" ]; then
              ADC_VER=$(awk '/^> show version/{flag=1; next} /^(>|root@)/{if(flag) {flag=0; exit}} flag' "$SHOWCMDS" 2>/dev/null | grep -i "NetScaler" | head -n 1)
         fi
-        # Fallback to ns.conf
+        # Fallback to ns.conf if showcmds doesn't have it
         if [ -z "$ADC_VER" ]; then
              local ADC_CONF=$(find . -name "ns.conf" -path "*/nsconfig/ns.conf" 2>/dev/null | head -n 1)
-             ADC_VER=$(head -n 5 "$ADC_CONF" 2>/dev/null | grep -iE "^#.*NetScaler (NS|BLX)[0-9]" | head -n 1 | tr -d '# ')
+             ADC_VER=$(head -n 5 "$ADC_CONF" 2>/dev/null | grep -iE "^#.*(NS|BLX|NetScaler).*Build" | head -n 1 | tr -d '# ')
         fi
         echo "[Version]  : ${ADC_VER:-Version not found}"
         
@@ -82,7 +82,7 @@ sysinfo() {
         fi
     fi
     
-    # 🆕 Extract HA State directly from show ha node in showcmds
+    # Extract HA State directly from show ha node in showcmds
     local HA_STATE=""
     if [ -n "$SHOWCMDS" ]; then
         HA_STATE=$(awk '/^> show ha node/{flag=1; next} /^(>|root@)/{if(flag) {flag=0; exit}} flag' "$SHOWCMDS" 2>/dev/null | grep -i "Master State:" | head -n 1 | awk -F ':' '{print $2}' | xargs)
@@ -245,8 +245,7 @@ nstriage() {
         
         local VAR_AVAIL=$(awk '$NF=="/var" {print $4}' "$DISK_FILE" 2>/dev/null)
         if [ -n "$VAR_AVAIL" ]; then
-            # Strip decimal points for bash integer comparison (e.g. 5.8G -> 5)
-            local VAR_VAL=$(echo "$VAR_AVAIL" | grep -oE "[0-9]+" | head -n 1)
+            local VAR_VAL=$(echo "$VAR_AVAIL" | grep -oE "^[0-9]+" | head -n 1)
             local VAR_UNIT=$(echo "$VAR_AVAIL" | grep -oE "[A-Za-z]+")
             
             if [[ "$VAR_UNIT" == "G" || "$VAR_UNIT" == "GB" ]]; then
@@ -418,7 +417,7 @@ nsps() {
 # --- SMART GREP FUNCTIONS (Replaced Aliases for Local Scope Support) ---
 nscrashes() {
     echo -e "\n\e[1m[Hunting Core/Crash Dumps in /var/crash and /var/core...]\e[0m"
-    local CR=$(find . -type d \( -name "crash" -o -name "core" \) -exec ls -latr {} + 2>/dev/null | grep -v "^total")
+    local CR=$(find . -type f -path "*/var/crash/*" -o -path "*/var/core/*" -exec ls -lah {} + 2>/dev/null | grep -v "directory_listing.txt")
     [ -n "$CR" ] && echo "$CR" || echo " -> None found."
 }
 nsboot() {
