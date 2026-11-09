@@ -409,3 +409,265 @@ total 168
 drwxrwxrwx  2 upload  upload   4.0K Oct XX XX:XX .
 drwxrwxrwx  3 upload  upload   4.0K Oct XX XX:XX ..
 -rw-rw-rw-  1 upload  upload   155K Oct XX XX:XX sdc.log
+
+Netscaler as BLX sample struct
+
+/upload/ftp/CASE_ID/collector_P_IP_ADDRESS_DATE_TIME]$ lr
+total 76
+drwxrwxrwx  12 upload  upload   4.0K Oct XX XX:XX .
+drwxrwxrwx   4 upload  upload   4.0K Oct XX XX:XX ..
+drwxrwxrwx   2 upload  upload   8.0K Oct XX XX:XX bigfoot_analysis
+drwxrwxrwx   5 upload  upload   4.0K Oct XX XX:XX conFetch
+drwxrwxrwx   3 upload  upload   4.0K Oct XX XX:XX etc
+drwxrwxrwx   3 upload  upload   4.0K Oct XX XX:XX flash
+-rw-rw-rw-   1 upload  upload    16K Oct XX XX:XX memstat.XXXXX
+drwxrwxrwx   5 upload  upload   4.0K Oct XX XX:XX nsconfig
+drwxrwxrwx   2 upload  upload   4.0K Oct XX XX:XX offline_analysis
+drwxrwxrwx   3 upload  upload   4.0K Oct XX XX:XX root
+drwxrwxrwx   2 upload  upload   8.0K Oct XX XX:XX shell
+drwxrwxrwx   3 upload  upload   4.0K Oct XX XX:XX usr
+drwxrwxrwx  17 upload  upload   4.0K Oct XX XX:XX var
+
+./bigfoot_analysis:
+total 304
+drwxrwxrwx   2 upload  upload   8.0K Oct XX XX:XX .
+drwxrwxrwx  12 upload  upload   4.0K Oct XX XX:XX ..
+-rw-rw-rw-   1 upload  upload   175B Oct XX XX:XX aaa_visual_CASE_ID_collector_P_IP_ADDRESS_DATE_TIME.out
+-rw-rw-rw-   1 upload  upload     0B Oct XX XX:XX confetch_helper_CASE_ID_collector_P_IP_ADDRESS_DATE_TIME.out
+-rw-rw-rw-   1 upload  upload   160B Oct XX XX:XX failover_analysis_CASE_ID_collector_P_IP_ADDRESS_DATE_TIME.out
+-rw-rw-rw-   1 upload  upload   7.7K Oct XX XX:XX highmgmtcpu_CASE_ID_collector_P_IP_ADDRESS_DATE_TIME.out
+-rw-rw-rw-   1 upload  upload   2.1K Oct XX XX:XX highpecpu_CASE_ID_collector_P_IP_ADDRESS_DATE_TIME.out
+-rw-rw-rw-   1 upload  upload    86B Oct XX XX:XX memoryanalysis_CASE_ID_collector_P_IP_ADDRESS_DATE_TIME.out
+-rw-rw-rw-   1 upload  upload     0B Oct XX XX:XX memstatParser_CASE_ID_collector_P_IP_ADDRESS_DATE_TIME.out
+-rw-rw-rw-   1 upload  upload   8.7K Oct XX XX:XX n_ns_tprof.newnslog
+-rw-rw-rw-   1 upload  upload   8.5K Oct XX XX:XX n_ns_tprof.newnslog.13
+-rw-rw-rw-   1 upload  upload   8.5K Oct XX XX:XX n_ns_tprof.newnslog.14
+-rw-rw-rw-   1 upload  upload   8.6K Oct XX XX:XX n_ns_tprof.newnslog.15
+-rw-rw-rw-   1 upload  upload   8.6K Oct XX XX:XX n_ns_tprof.newnslog.16
+-rw-rw-rw-   1 upload  upload   8.2K Oct XX XX:XX n_ns_tprof.newnslog.17
+-rw-rw-rw-   1 upload  upload   7.1K Oct XX XX:XX networkoverview_CASE_ID_collector_P_IP_ADDRESS_DATE_TIME.out
+-rw-rw-rw-   1 upload  upload   3.7K Oct XX XX:XX ns_memleak_CASE_ID_collector_P_IP_ADDRESS_DATE_TIME.out
+-rw-rw-rw-   1 upload  upload   422B Oct XX XX:XX ns_offline_analysis_CASE_ID_collector_P_IP_ADDRESS_DATE_TIME.out
+-rw-rw-rw-   1 upload  upload   8.5K Oct XX XX:XX ns_tprof.newnslog
+-rw-rw-rw-   1 upload  upload   8.9K Oct XX XX:XX ns_tprof.newnslog.13
+-rw-rw-rw-   1 upload  upload   8.9K Oct XX XX:XX ns_tprof.newnslog.14
+-rw-rw-rw-   1 upload  upload   8.4K Oct XX XX:XX ns_tprof.newnslog.15
+-rw-rw-rw-   1 upload  upload   8.4K Oct XX XX:XX ns_tprof.newnslog.16
+-rw-rw-rw-   1 upload  upload   8.0K Oct XX XX:XX ns_tprof.newnslog.17
+-rw-rw-rw-   1 upload  upload   3.9K Oct XX XX:XX system_limits_CASE_ID_collector_P_IP_ADDRESS_DATE_TIME.out
+-rw-rw-rw-   1 upload  upload   5.4K Oct XX XX:XX system_overview_CASE_ID_collector_P_IP_ADDRESS_DATE_TIME.out
+
+./conFetch:
+total 20
+drwxrwxrwx   5 upload  upload   4.0K Oct XX XX:XX .
+drwxrwxrwx  12 upload  upload   4.0K Oct XX XX:XX ..
+drwxrwxrwx   2 upload  upload   4.0K Oct XX XX:XX Graph
+drwxrwxrwx   2 upload  upload   4.0K Oct XX XX:XX nsconmsg
+drwxrwxrwx   2 upload  upload   4.0K Oct XX XX:XX show_output
+
+./conFetch/nsconmsg:
+total 44
+drwxrwxrwx  2 upload  upload   4.0K Oct XX XX:XX .
+drwxrwxrwx  5 upload  upload   4.0K Oct XX XX:XX ..
+-rw-rw-rw-  1 upload  upload    31K Oct XX XX:XX nsconmsg_counters.txt
+
+./conFetch/show_output:
+total 16
+drwxrwxrwx  2 upload  upload   4.0K Oct XX XX:XX .
+drwxrwxrwx  5 upload  upload   4.0K Oct XX XX:XX ..
+-rw-rw-rw-  1 upload  upload   773B Oct XX XX:XX show_ha.txt
+-rw-rw-rw-  1 upload  upload   773B Oct XX XX:XX show_imall.txt
+
+./etc:
+total 164
+drwxrwxrwx   3 upload  upload   4.0K Oct XX XX:XX .
+drwxrwxrwx  12 upload  upload   4.0K Oct XX XX:XX ..
+drwxrwxrwx   4 upload  upload   4.0K Oct XX XX:XX blx
+-rw-rw-rw-   1 upload  upload   1.1K Jul XX  XXXX chrony.conf
+-rw-rw-rw-   1 upload  upload   451B Oct XX XX:XX crontab
+-rw-rw-rw-   1 upload  upload   195B Oct XX XX:XX hosts
+-rw-rw-rw-   1 upload  upload   371B Oct XX XX:XX resolv.conf
+
+./etc/blx:
+total 12176
+drwxrwxrwx  4 upload  upload   4.0K Oct XX XX:XX .
+drwxrwxrwx  3 upload  upload   4.0K Oct XX XX:XX ..
+-rw-rw-rw-  1 upload  upload    24K Oct XX XX:XX BLX_SELinux_Policy.pp
+drwxrwxrwx  2 upload  upload   4.0K Oct XX XX:XX appflow
+-rw-rw-rw-  1 upload  upload   3.9K Oct XX XX:XX blx.conf
+-rw-rw-rw-  1 upload  upload    51K Oct XX XX:XX clearConfigBasic.sql
+-rw-rw-rw-  1 upload  upload   3.8K Oct XX XX:XX clearConfigExtended.sql
+-rw-rw-rw-  1 upload  upload   2.8M Oct XX XX:XX default_signatures.xml
+-rw-rw-rw-  1 upload  upload   8.5M Oct XX XX:XX nscfg.db
+-rw-rw-rw-  1 upload  upload    25K Oct XX XX:XX nsconfstate.conf
+-rw-rw-rw-  1 upload  upload    25K Oct XX XX:XX nshttpd.conf
+drwxrwxrwx  2 upload  upload   4.0K Oct XX XX:XX snmp
+
+./etc/blx/appflow:
+total 100
+drwxrwxrwx  2 upload  upload   4.0K Oct XX XX:XX .
+drwxrwxrwx  4 upload  upload   4.0K Oct XX XX:XX ..
+-rw-rw-rw-  1 upload  upload    84K Oct XX XX:XX ns_ipfix.yaml
+
+./etc/blx/snmp:
+total 1760
+drwxrwxrwx  2 upload  upload   4.0K Oct XX XX:XX .
+drwxrwxrwx  4 upload  upload   4.0K Oct XX XX:XX ..
+-rw-rw-rw-  1 upload  upload   776K Oct XX XX:XX NS-MIB-smiv1.mib
+-rw-rw-rw-  1 upload  upload   782K Oct XX XX:XX NS-MIB-smiv2.mib
+-rw-rw-rw-  1 upload  upload   164K Oct XX XX:XX mib.txt
+-rw-rw-rw-  1 upload  upload    11K Oct XX XX:XX traps.txt
+
+./flash:
+total 12
+drwxrwxrwx   3 upload  upload   4.0K Oct XX XX:XX .
+drwxrwxrwx  12 upload  upload   4.0K Oct XX XX:XX ..
+drwxrwxrwx   2 upload  upload   4.0K Oct XX XX:XX .recovery
+
+./flash/.recovery:
+total 8
+drwxrwxrwx  2 upload  upload   4.0K Oct XX XX:XX .
+drwxrwxrwx  3 upload  upload   4.0K Oct XX XX:XX ..
+
+./nsconfig:
+total 4636
+drwxrwxrwx   5 upload  upload   4.0K Oct XX XX:XX .
+drwxrwxrwx  12 upload  upload   4.0K Oct XX XX:XX ..
+-rw-rw-rw-   1 upload  upload    48B Oct XX XX:XX .callhome.conf
+-rw-rw-rw-   1 upload  upload    40B Oct XX XX:XX ZebOS.conf
+drwxrwxrwx   2 upload  upload   4.0K Oct XX XX:XX license
+drwxrwxrwx   3 upload  upload   4.0K Oct XX XX:XX loginschema
+drwxrwxrwx   2 upload  upload   4.0K Oct XX XX:XX monitors
+-rw-rw-rw-   1 upload  upload   227K Oct XX XX:XX ns.conf
+-rw-rw-rw-   1 upload  upload   227K Oct XX XX:XX ns.conf.0
+-rw-rw-rw-   1 upload  upload   228K Oct XX XX:XX ns.conf.1
+-rw-rw-rw-   1 upload  upload    18K Oct XX XX:XX ns.conf.new
+-rw-rw-rw-   1 upload  upload    65K Oct XX XX:XX ns.conf.old
+-rw-rw-rw-   1 upload  upload   227K Oct XX XX:XX unified.conf
+-rw-rw-rw-   1 upload  upload   2.7M Oct XX XX:XX updated_signatures.xml
+
+./nsconfig/license:
+total 36
+drwxrwxrwx  2 upload  upload   4.0K Oct XX XX:XX .
+drwxrwxrwx  5 upload  upload   4.0K Oct XX XX:XX ..
+-rw-rw-rw-  1 upload  upload   467B Oct XX XX:XX .laslicinfo
+-rw-rw-rw-  1 upload  upload   1.0K Oct XX XX:XX adm_jwt
+-rw-rw-rw-  1 upload  upload   3.2K Oct XX XX:XX comp_jwt
+-rw-rw-rw-  1 upload  upload   7.2K Oct XX XX:XX ent_jwt
+-rw-rw-rw-  1 upload  upload   5.7K Oct XX XX:XX las_cert.pem
+
+./nsconfig/loginschema:
+total 12
+drwxrwxrwx  3 upload  upload   4.0K Oct XX XX:XX .
+drwxrwxrwx  5 upload  upload   4.0K Oct XX XX:XX ..
+drwxrwxrwx  2 upload  upload   4.0K Oct XX XX:XX LoginSchema
+
+./offline_analysis:
+total 11608
+drwxrwxrwx   2 upload  upload   4.0K Oct XX XX:XX .
+drwxrwxrwx  12 upload  upload   4.0K Oct XX XX:XX ..
+-rw-rw-rw-   1 upload  upload    37K Oct XX XX:XX consmsg_newnslog
+-rw-rw-rw-   1 upload  upload    58K Oct XX XX:XX current_newnslog
+-rw-rw-rw-   1 upload  upload    50K Oct XX XX:XX event_newnslog
+-rw-rw-rw-   1 upload  upload    42K Oct XX XX:XX ns_off.out
+-rw-rw-rw-   1 upload  upload    15K Oct XX XX:XX stats_newnslog
+
+./root:
+total 12
+drwxrwxrwx   3 upload  upload   4.0K Oct XX XX:XX .
+drwxrwxrwx  12 upload  upload   4.0K Oct XX XX:XX ..
+drwxrwxrwx   2 upload  upload   4.0K Oct XX XX:XX .blx
+
+./root/.blx:
+total 32
+drwxrwxrwx  2 upload  upload   4.0K Oct XX XX:XX .
+drwxrwxrwx  3 upload  upload   4.0K Oct XX XX:XX ..
+-rw-rw-rw-  1 upload  upload   140B Oct XX XX:XX blx-derived.conf
+-rw-rw-rw-  1 upload  upload    17B Oct XX XX:XX blx-mode
+-rw-rw-rw-  1 upload  upload   140B Oct XX XX:XX blx-post-config-start
+-rw-rw-rw-  1 upload  upload   3.4K Oct XX XX:XX blx-post-stop.sh
+-rw-rw-rw-  1 upload  upload   4.8K Oct XX XX:XX blx-pre-start.sh
+
+./shell:
+total 45892
+drwxrwxrwx   2 upload  upload   8.0K Oct XX XX:XX .
+drwxrwxrwx  12 upload  upload   4.0K Oct XX XX:XX ..
+-rw-rw-rw-   1 upload  upload   694B Oct XX XX:XX arp-a.out
+-rw-rw-rw-   1 upload  upload    18B Oct XX XX:XX blx-hostname.out
+-rw-rw-rw-   1 upload  upload    29B Oct XX XX:XX date.out
+-rw-rw-rw-   1 upload  upload   653B Oct XX XX:XX df-h.out
+-rw-rw-rw-   1 upload  upload   54K Oct XX XX:XX dmesg-a.out
+-rw-rw-rw-   1 upload  upload   4.8M Oct XX XX:XX du-h.out
+-rw-rw-rw-   1 upload  upload    10B Oct XX XX:XX etc-hostname.out
+-rw-rw-rw-   1 upload  upload   399B Oct XX XX:XX hostnamectl.out
+-rw-rw-rw-   1 upload  upload   2.0K Oct XX XX:XX ifconfig-a.out
+-rw-rw-rw-   1 upload  upload   334B Oct XX XX:XX netstat-rn.out
+-rw-rw-rw-   1 upload  upload   564K Oct XX XX:XX ns_running_config.conf
+-rw-rw-rw-   1 upload  upload   495B Oct XX XX:XX os-release.out
+-rw-rw-rw-   1 upload  upload    30K Oct XX XX:XX ps-aluxwr.out
+-rw-rw-rw-   1 upload  upload    23K Oct XX XX:XX ps-aux.out
+-rw-rw-rw-   1 upload  upload   942K Oct XX XX:XX showcmds.txt
+-rw-rw-rw-   1 upload  upload   160B Oct XX XX:XX showtech_info.out
+-rw-rw-rw-   1 upload  upload   5.9K Oct XX XX:XX statcmds.txt
+-rw-rw-rw-   1 upload  upload    46K Oct XX XX:XX sysctl-a.out
+-rw-rw-rw-   1 upload  upload    18K Oct XX XX:XX top-b.out
+-rw-rw-rw-   1 upload  upload   125B Oct XX XX:XX uname-a.out
+-rw-rw-rw-   1 upload  upload    63B Oct XX XX:XX uptime.out
+
+./var:
+total 76
+drwxrwxrwx  17 upload  upload   4.0K Oct XX XX:XX .
+drwxrwxrwx  12 upload  upload   4.0K Oct XX XX:XX ..
+drwxrwxrwx   2 upload  upload   4.0K Oct XX XX:XX core
+drwxrwxrwx   2 upload  upload   4.0K Oct XX XX:XX crash
+drwxrwxrwx   3 upload  upload    12K Oct XX XX:XX log
+drwxrwxrwx   6 upload  upload   4.0K Oct XX XX:XX netscaler
+drwxrwxrwx  10 upload  upload   4.0K Oct XX XX:XX nslog
+drwxrwxrwx   3 upload  upload   4.0K Oct XX XX:XX nsproflog
+
+./var/crash:
+total 8
+drwxrwxrwx   2 upload  upload   4.0K Oct XX XX:XX .
+drwxrwxrwx  17 upload  upload   4.0K Oct XX XX:XX ..
+
+./var/log:
+total 180732
+drwxrwxrwx   3 upload  upload    12K Oct XX XX:XX .
+drwxrwxrwx  17 upload  upload   4.0K Oct XX XX:XX ..
+-rw-rw-rw-   1 upload  upload   389K Oct XX XX:XX auth.log
+-rw-rw-rw-   1 upload  upload   168K Oct XX XX:XX bash.log
+-rw-rw-rw-   1 upload  upload    19K Oct XX XX:XX blx-boot.log
+-rw-rw-rw-   1 upload  upload    10K Oct XX XX:XX callhome.log
+-rw-rw-rw-   1 upload  upload   2.1M Oct XX XX:XX httpaccess-vpn.log
+-rw-rw-rw-   1 upload  upload   2.1M Oct XX XX:XX httpaccess.log
+-rw-rw-rw-   1 upload  upload    69K Oct XX XX:XX httperror-vpn.log
+-rw-rw-rw-   1 upload  upload    69K Oct XX XX:XX httperror.log
+-rw-rw-rw-   1 upload  upload   1.4M Oct XX XX:XX messages
+-rw-rw-rw-   1 upload  upload   4.2M Oct XX XX:XX nitro.log
+-rw-rw-rw-   1 upload  upload   530K Oct XX XX:XX notice.log
+-rw-rw-rw-   1 upload  upload   1.2M Oct XX XX:XX ns.log
+-rw-rw-rw-   1 upload  upload    89K Oct XX XX:XX nscollect.log
+-rw-rw-rw-   1 upload  upload    21K Oct XX XX:XX nsvpn.log
+
+./var/netscaler:
+total 24
+drwxrwxrwx   6 upload  upload   4.0K Oct XX XX:XX .
+drwxrwxrwx  17 upload  upload   4.0K Oct XX XX:XX ..
+drwxrwxrwx   2 upload  upload   4.0K Oct XX XX:XX gslb
+drwxrwxrwx   4 upload  upload   4.0K Oct XX XX:XX gslb_sync
+drwxrwxrwx   2 upload  upload   4.0K Oct XX XX:XX nshttpd
+
+./var/nslog:
+total 6788
+drwxrwxrwx  10 upload  upload   4.0K Oct XX XX:XX .
+drwxrwxrwx  17 upload  upload   4.0K Oct XX XX:XX ..
+-rw-rw-rw-   1 upload  upload   958K Oct XX XX:XX dmesg.boot
+-rw-rw-rw-   1 upload  upload    11K Oct XX XX:XX MacroNEtpconfnewnslog
+-rw-rw-rw-   1 upload  upload    24K Oct XX XX:XX NEWNSLOGtpconfnewnslog
+drwxrwxrwx   2 upload  upload   4.0K Oct XX XX:XX newnslog
+
+./var/nslog/newnslog:
+total 2428
+drwxrwxrwx   2 upload  upload   4.0K Oct XX XX:XX .
+drwxrwxrwx  10 upload  upload   4.0K Oct XX XX:XX ..
+-rw-rw-rw-   1 upload  upload   2.4M Oct XX XX:XX newnslog.ppe.0
