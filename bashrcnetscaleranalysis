@@ -25,6 +25,7 @@ sysinfo() {
     local ADC_CONF=$(find . -name "ns.conf" -path "*/nsconfig/ns.conf" 2>/dev/null | head -n 1)
     local HW_TYPE="Unknown"
     local SERIAL_NUM=""
+    local PLATFORM="Hardware / Unknown Virtualization"
 
     if [ -n "$ADM_VER" ]; then
         echo "[Type]     : NetScaler Console (ADM)"
@@ -38,37 +39,36 @@ sysinfo() {
             HW_TYPE="BLX"
             echo "[Type]     : NetScaler BLX (Linux BareMetal)"
         else
-            # Try to determine VPX, MPX, SDX from dmesg or messages
             local hw=$(find . -path "*/var/log/messages*" -o -path "*/var/nslog/dmesg*" -exec zgrep -i "NetScaler hardware" {} + 2>/dev/null | head -n 1 | awk -F 'NetScaler hardware ' '{print $2}')
-            if echo "$hw" | grep -qi "Virtual"; then
-                HW_TYPE="VPX"
-            elif echo "$hw" | grep -qi "SDX"; then
-                HW_TYPE="SDX"
-            elif echo "$hw" | grep -qiE "MPX|CPX"; then
-                HW_TYPE="MPX"
-            else
-                HW_TYPE="ADC (Unknown form factor)"
+            if echo "$hw" | grep -qi "Virtual"; then HW_TYPE="VPX"
+            elif echo "$hw" | grep -qi "SDX"; then HW_TYPE="SDX"
+            elif echo "$hw" | grep -qiE "MPX|CPX"; then HW_TYPE="MPX"
+            else HW_TYPE="ADC (Unknown form factor)"
             fi
             echo "[Type]     : NetScaler $HW_TYPE"
         fi
-        echo "[Version]  : $(grep -i -m 1 "NetScaler" "$ADC_CONF" 2>/dev/null | tr -d '# ')"
         
-        # If hardware, get serial number and model details
-        if [ -n "$hw" ]; then
-            echo "[Model]    : $hw"
+        # 🆕 Fix Version Extraction (Grab exact release from top of ns.conf or showcmds)
+        local ADC_VER=$(head -n 5 "$ADC_CONF" 2>/dev/null | grep -iE "^#.*NetScaler (NS|BLX)[0-9]" | head -n 1 | tr -d '# ')
+        if [ -z "$ADC_VER" ]; then
+            ADC_VER=$(find . -name "showcmds.txt" -exec awk '/show version/{getline; print}' {} + 2>/dev/null | head -n 1)
         fi
+        echo "[Version]  : ${ADC_VER:-Version not found in ns.conf or showcmds}"
+        
+        [ -n "$hw" ] && echo "[Model]    : $hw"
         
         if [[ "$HW_TYPE" == "MPX" || "$HW_TYPE" == "SDX" ]]; then
             SERIAL_NUM=$(find . -name "showtech_info.out" -exec grep -i "Serial" {} + 2>/dev/null | head -n 1)
-            if [ -z "$SERIAL_NUM" ]; then
-                SERIAL_NUM=$(find . -path "*/var/log/messages*" -exec zgrep -i "Serial Number" {} + 2>/dev/null | head -n 1)
-            fi
+            [ -z "$SERIAL_NUM" ] && SERIAL_NUM=$(find . -path "*/var/log/messages*" -exec zgrep -i "Serial Number" {} + 2>/dev/null | head -n 1)
             [ -n "$SERIAL_NUM" ] && echo "[Serial]   : $SERIAL_NUM"
         fi
     fi
     
-    # 🆕 Host Platform Detection
-    local PLATFORM="Hardware / Unknown Virtualization"
+    # 🆕 Extract HA State directly into dashboard
+    local HA_STATE=$(find . -name "show_ha.txt" -exec grep -iE "^Node State" {} + 2>/dev/null | head -n 1 | awk -F ':' '{print $2}' | xargs)
+    [ -n "$HA_STATE" ] && echo "[HA State] : $HA_STATE"
+    
+    # Platform Detection
     local DMI=$(find . -name "dmidecode.out" 2>/dev/null | head -n 1)
     if [ -n "$DMI" ]; then
         if grep -qi "Amazon" "$DMI"; then PLATFORM="AWS (Amazon EC2)"
@@ -79,14 +79,13 @@ sysinfo() {
         fi
     fi
     
-    # If it's a BLX instance, read the os-release for the underlying Linux flavor
     local OS_RELEASE=$(find . -name "os-release.out" 2>/dev/null | head -n 1)
+    local UNAME=$(find . -name "uname-a.out" 2>/dev/null | head -n 1)
     if [ -n "$OS_RELEASE" ]; then
         local PRETTY_NAME=$(grep "^PRETTY_NAME=" "$OS_RELEASE" | cut -d '=' -f 2 | tr -d '"')
         [ -n "$PRETTY_NAME" ] && PLATFORM="BLX on $PRETTY_NAME"
-    else
-        local UNAME=$(find . -name "uname-a.out" 2>/dev/null | head -n 1)
-        if [ -n "$UNAME" ] && grep -qi "Linux" "$UNAME"; then PLATFORM="NetScaler BLX (Linux BareMetal)"; fi
+    elif [ -n "$UNAME" ] && grep -qi "Linux" "$UNAME"; then 
+        PLATFORM="NetScaler BLX (Linux BareMetal)"
     fi
     echo "[Platform] : $PLATFORM"
     
@@ -126,14 +125,24 @@ nsips() {
     fi
 }
 
-alias nsha='echo -e "\n--- HA Node State ---\n"; local HA_OUT=$(find . -name "show_ha.txt" 2>/dev/null | head -n 1); if [ -n "$HA_OUT" ]; then cat "$HA_OUT"; else echo -e "\n[Proof Cmd]: nsconmsg -K var/nslog/newnslog -d event\n"; local HA_EV=$(nsconmsg -K var/nslog/newnslog -d event 2>/dev/null | grep -iE "ha_state|remote node|master" | tail -n 10); [ -n "$HA_EV" ] && echo "$HA_EV" || echo " -> No HA state transitions found."; fi'
+nsha() {
+    echo -e "\n\e[1m=== 🔄 HA NODE STATE ===\e[0m"
+    echo -e "\e[90m[Checking 'show_ha.txt' or telemetry logs for HA state transitions...]\e[0m"
+    local HA_OUT=$(find . -name "show_ha.txt" 2>/dev/null | head -n 1)
+    if [ -n "$HA_OUT" ] && [ -s "$HA_OUT" ]; then 
+        cat "$HA_OUT"
+    else 
+        echo -e "[Proof Cmd]: nsconmsg -K var/nslog/newnslog -d event"
+        local HA_EV=$(find . -name "newnslog" -exec nsconmsg -K {} -d event \; 2>/dev/null | grep -iE "ha_state|remote node|master" | tail -n 10)
+        [ -n "$HA_EV" ] && echo "$HA_EV" || echo " -> No HA state transitions found in newnslog."
+    fi
+}
 
 nslic() {
-    echo -e "\n=== 🔑 LICENSE AUDIT (LAS & Legacy) ==="
-    echo -e "\e[90m[Checking 'show license' or 'show ns license' output in collector...]\e[0m"
+    echo -e "\n\e[1m=== 🔑 LICENSE AUDIT (LAS & Legacy) ===\e[0m"
+    echo -e "\e[90m[Checking 'show ns license' output in collector...]\e[0m"
     local LIC_CMD=$(find . -name "showcmds.txt" -o -name "show_ns_license.txt" 2>/dev/null | head -n 1)
     if [ -n "$LIC_CMD" ]; then
-        # Awk to extract just the license block from showcmds.txt
         local LIC_OUT=$(awk '/show (ns )?license/{flag=1; print; next} /^(>|root@|show )/{if(flag) {flag=0; exit}} flag' "$LIC_CMD" 2>/dev/null | head -n 30)
         [ -n "$LIC_OUT" ] && echo "$LIC_OUT" || echo " -> License command output not found in showcmds.txt."
     else
@@ -280,28 +289,34 @@ alias nstriage_save="nstriage | sed 's/\x1b\[[0-9;]*m//g' | tee nstriage_output.
 # 4. EXPERT TOOLS, SECURITY & LOGINS
 # --------------------------------------------------------------------
 nsdiff() {
-    echo -e "\n=== SAVED vs RUNNING CONFIG DIFFERENCE ==="
-    echo -e "\e[90m[Comparing nsconfig/ns.conf against collector running config output]\e[0m"
-    RUN_CONF=$(find . -iname "*ns_running_config.conf*" -o -iname "*runningconfig*.txt" | head -n 1)
-    SAVED_CONF=$(find . -path "*/nsconfig/ns.conf" | head -n 1)
+    echo -e "\n\e[1m=== SAVED vs RUNNING CONFIG DIFFERENCE ===\e[0m"
+    local RUN_CONF=$(find . -iname "*ns_running_config.conf*" -o -iname "*runningconfig*.txt" | head -n 1)
+    local SAVED_CONF=$(find . -path "*/nsconfig/ns.conf" | head -n 1)
     
     if [ -n "$SAVED_CONF" ] && [ -n "$RUN_CONF" ]; then
-        diff -u "$SAVED_CONF" "$RUN_CONF" | grep -E "^\+|^-" | grep -v "^---" | grep -v "^+++"
+        echo -e "\e[90m[Saved Config]   : $SAVED_CONF"
+        echo -e "[Running Config] : $RUN_CONF\e[0m"
+        echo -e "\e[33m[Legend] '-' means line is in SAVED but MISSING in RUNNING."
+        echo -e "         '+' means line is in RUNNING but NOT SAVED to disk.\e[0m\n"
+        diff -u "$SAVED_CONF" "$RUN_CONF" | grep -E "^\+|^-" | grep -v "^---" | grep -v "^+++" || echo " -> Configs are identical."
     else
-        echo "Could not locate either saved ns.conf or the running config output."
+        echo " -> Could not locate either saved ns.conf or the running config output."
     fi
 }
 
 nssec() {
     echo -e "\n\e[1m=== 🚨 SUSPICIOUS PROCESSES & BACKDOORS ===\e[0m"
-    find . -name "ps-alux*" -o -name "ps-aux*" -exec grep -HinE "curl|sh |python|wget|bash" {} + 2>/dev/null | grep -v "mps" || echo " -> Clean."
+    echo -e "\e[90m[Checking ps-aux* for curl, wget, python, bash...]\e[0m"
+    local SUSP=$(find . -name "ps-alux*" -o -name "ps-aux*" -exec grep -HinE "curl|sh |python|wget|bash" {} + 2>/dev/null | grep -v "mps")
+    [ -n "$SUSP" ] && echo "$SUSP" || echo " -> Clean."
     
     echo -e "\n\e[1m=== 🚨 LOGON POINT FILES (Check for Web Shells) ===\e[0m"
+    echo -e "\e[90m[Checking /netscaler/logon/LogonPoint/a*...]\e[0m"
     local LPOINT=$(find . -path "*/netscaler/logon/LogonPoint/a*" -ls 2>/dev/null)
     [ -n "$LPOINT" ] && echo "$LPOINT" || echo " -> Clean."
     
     echo -e "\n\e[1m=== 🔐 MANAGEMENT LOGINS (SSH/GUI) ===\e[0m"
-    echo -e "\e[90m[Source: var/log/auth.log* | Top 10 Failed/Success Accounts & IPs]\e[0m"
+    echo -e "\e[90m\e[0m"
     local AUTH=$(find . -path "*/var/log/auth.log*")
     if [ -n "$AUTH" ]; then
         echo -e "\n[FAILED Attempts (Count | User/IP)]:"
@@ -316,7 +331,7 @@ nssec() {
     fi
 
     echo -e "\n\e[1m=== 🌍 GATEWAY / AAA VPN LOGINS ===\e[0m"
-    echo -e "\e[90m[Source: var/log/ns.log* | Top 10 Failed AAA Logins]\e[0m"
+    echo -e "\e[90m\e[0m"
     local NSLOG=$(find . -path "*/var/log/ns.log*")
     if [ -n "$NSLOG" ]; then
         local VPN_FAIL=$(zgrep -i "LOGIN_FAILED" $NSLOG 2>/dev/null | grep -oE "User [^ ]+ - Client_ip [0-9\.]+" | sort | uniq -c | sort -nr | head -n 10)
@@ -327,7 +342,8 @@ nssec() {
 }
 
 nscerts() {
-    echo -e "\n=== 🔐 INSTANT SSL CERTIFICATE DECODER ==="
+    echo -e "\n\e[1m=== 🔐 INSTANT SSL CERTIFICATE DECODER ===\e[0m"
+    echo -e "\e[90m[Checking nsconfig/ssl/ for .cert, .crt, .pem...]\e[0m"
     local CERTS=$(find . -path "*/nsconfig/ssl/*" -type f \( -iname "*.cert" -o -iname "*.crt" -o -iname "*.pem" \) 2>/dev/null)
     if [ -n "$CERTS" ]; then
         echo "$CERTS" | while read cert; do
@@ -339,16 +355,67 @@ nscerts() {
     fi
 }
 
-# --- SMART GREP ALIASES ---
-alias nscrashes='echo -e "\n[Hunting Core/Crash Dumps...]"; local CR=$(find . -type d \( -name "crash" -o -name "core" \) -exec ls -latr {} + 2>/dev/null | grep -v "^total"); [ -n "$CR" ] && echo "$CR" || echo "-> None found."'
-alias nsboot='echo -e "\n[Hunting Reboots & Panics...]"; local BT=$(find . -path "*/var/log/messages*" -o -path "*/var/nslog/dmesg*" -exec zgrep -HinE "booting|FreeBSD|panic|reboot" {} + 2>/dev/null); [ -n "$BT" ] && echo "$BT" || echo "-> None found."'
-alias nsnotice='echo -e "\n[Hunting Monitor UP/DOWN Flaps...]"; local NO=$(find . -path "*/var/log/notice.log*" -exec zgrep -HinE "DOWN|UP" {} + 2>/dev/null | grep -iE "monitor|service|server"); [ -n "$NO" ] && echo "$NO" || echo "-> None found."'
-alias nswaf='echo -e "\n[Hunting AppFW & Bot Blocks...]"; local WA=$(find . -path "*/var/log/ns.log*" -exec zgrep -HinE "APPFW|BOT" {} + 2>/dev/null); [ -n "$WA" ] && echo "$WA" || echo "-> None found."'
-alias nsauth='echo -e "\n[Hunting AAA, SAML & LDAP Logins...]"; local AU=$(find . -path "*/var/log/ns.log*" -exec zgrep -HinE "AAA|SAML|LDAP|LOGIN|EPA" {} + 2>/dev/null); [ -n "$AU" ] && echo "$AU" || echo "-> None found."'
-alias nsvpn='echo -e "\n[Hunting SSLVPN & ICA drops...]"; local VP=$(find . -path "*/var/log/ns.log*" -exec zgrep -HinE "sslvpn|STA ticket|ICA" {} + 2>/dev/null); [ -n "$VP" ] && echo "$VP" || echo "-> None found."'
-alias nshttp='echo -e "\n[Hunting HTTP 5xx Gateway Errors...]"; local HT=$(find . -path "*/var/log/httperror.log*" -exec zgrep -HinE " 5[0-9]{2} " {} + 2>/dev/null); [ -n "$HT" ] && echo "$HT" || echo "-> None found."'
-alias nsapi='echo -e "\n[Hunting Nitro API Calls...]"; local AP=$(find . -path "*/var/log/nitro.log*" -exec zgrep -HinE "login|error|fail" {} + 2>/dev/null); [ -n "$AP" ] && echo "$AP" || echo "-> None found."'
-alias nsoffline='echo -e "\n[Dumping pre-extracted newnslog events...]"; local OF=$(find . -path "*/offline_analysis/event_newnslog*" -exec cat {} + 2>/dev/null); [ -n "$OF" ] && echo "$OF" || echo "-> None found."'
+nsps() {
+    echo -e "\n\e[1m[Hunting processes in ps-alux* or ps-aux*...]\e[0m"
+    if [ -z "$1" ]; then 
+        local PS_FILE=$(find . -name "ps-alux*" -o -name "ps-aux*" 2>/dev/null | head -n 1)
+        if [ -n "$PS_FILE" ]; then 
+            cat "$PS_FILE"
+        else 
+            echo " -> No ps output file found in bundle."
+        fi
+    else 
+        local MAT=$(find . -name "ps-alux*" -o -name "ps-aux*" -exec grep -HinE "$1" {} + 2>/dev/null)
+        [ -n "$MAT" ] && echo "$MAT" || echo " -> No matches found for '$1'."
+    fi
+}
+
+# --- SMART GREP FUNCTIONS (Replaced Aliases for Local Scope Support) ---
+nscrashes() {
+    echo -e "\n\e[1m[Hunting Core/Crash Dumps in /var/crash and /var/core...]\e[0m"
+    local CR=$(find . -type d \( -name "crash" -o -name "core" \) -exec ls -latr {} + 2>/dev/null | grep -v "^total")
+    [ -n "$CR" ] && echo "$CR" || echo " -> None found."
+}
+nsboot() {
+    echo -e "\n\e[1m[Hunting Reboots & Panics in /var/log/messages* & dmesg*...]\e[0m"
+    local BT=$(find . -path "*/var/log/messages*" -o -path "*/var/nslog/dmesg*" -exec zgrep -HinE "booting|FreeBSD|panic|reboot" {} + 2>/dev/null)
+    [ -n "$BT" ] && echo "$BT" || echo " -> None found."
+}
+nsnotice() {
+    echo -e "\n\e[1m[Hunting Monitor UP/DOWN Flaps in /var/log/notice.log*...]\e[0m"
+    local NO=$(find . -path "*/var/log/notice.log*" -exec zgrep -HinE "DOWN|UP" {} + 2>/dev/null | grep -iE "monitor|service|server")
+    [ -n "$NO" ] && echo "$NO" || echo " -> None found."
+}
+nswaf() {
+    echo -e "\n\e[1m[Hunting AppFW & Bot Blocks in /var/log/ns.log*...]\e[0m"
+    local WA=$(find . -path "*/var/log/ns.log*" -exec zgrep -HinE "APPFW|BOT" {} + 2>/dev/null)
+    [ -n "$WA" ] && echo "$WA" || echo " -> None found."
+}
+nsauth() {
+    echo -e "\n\e[1m[Hunting AAA, SAML & LDAP Logins in /var/log/ns.log*...]\e[0m"
+    local AU=$(find . -path "*/var/log/ns.log*" -exec zgrep -HinE "AAA|SAML|LDAP|LOGIN|EPA" {} + 2>/dev/null)
+    [ -n "$AU" ] && echo "$AU" || echo " -> None found."
+}
+nsvpn() {
+    echo -e "\n\e[1m[Hunting SSLVPN & ICA drops in /var/log/ns.log*...]\e[0m"
+    local VP=$(find . -path "*/var/log/ns.log*" -exec zgrep -HinE "sslvpn|STA ticket|ICA" {} + 2>/dev/null)
+    [ -n "$VP" ] && echo "$VP" || echo " -> None found."
+}
+nshttp() {
+    echo -e "\n\e[1m[Hunting HTTP 5xx Gateway Errors in httperror.log*...]\e[0m"
+    local HT=$(find . -path "*/var/log/httperror.log*" -exec zgrep -HinE " 5[0-9]{2} " {} + 2>/dev/null)
+    [ -n "$HT" ] && echo "$HT" || echo " -> None found."
+}
+nsapi() {
+    echo -e "\n\e[1m[Hunting Nitro API Calls in nitro.log*...]\e[0m"
+    local AP=$(find . -path "*/var/log/nitro.log*" -exec zgrep -HinE "login|error|fail" {} + 2>/dev/null)
+    [ -n "$AP" ] && echo "$AP" || echo " -> None found."
+}
+nsoffline() {
+    echo -e "\n\e[1m[Dumping pre-extracted newnslog events from offline_analysis...]\e[0m"
+    local OF=$(find . -path "*/offline_analysis/event_newnslog*" -exec cat {} + 2>/dev/null)
+    [ -n "$OF" ] && echo "$OF" || echo " -> None found."
+}
 
 # --------------------------------------------------------------------
 # 5. INTERACTIVE LOG SEARCH & VIEWER
@@ -394,7 +461,6 @@ nslg() {
 }
 
 nsroute() { if [ -z "$1" ]; then local RO=$(find . -name "netstat-rn.out" -exec cat {} + 2>/dev/null); [ -n "$RO" ] && echo "$RO" || echo "-> Not found."; else local MAT=$(find . -name "netstat-rn.out" -exec grep -HinE "$1" {} + 2>/dev/null); [ -n "$MAT" ] && echo "$MAT" || echo "-> No matches."; fi; }
-nsps() { if [ -z "$1" ]; then local PS=$(find . -name "ps-alux*" -o -name "ps-aux*" -exec cat {} + 2>/dev/null); [ -n "$PS" ] && echo "$PS" || echo "-> Not found."; else local MAT=$(find . -name "ps-alux*" -o -name "ps-aux*" -exec grep -HinE "$1" {} + 2>/dev/null); [ -n "$MAT" ] && echo "$MAT" || echo "-> No matches."; fi; }
 nstime(){ local MAT=$(find . -path "*/var/log/ns.log*" -o -path "*/var/log/messages*" -exec zgrep -HinE "$1" {} + 2>/dev/null); [ -n "$MAT" ] && echo "$MAT" || echo "-> No matches."; }
 mpslg() { local MAT=$(find . -path "*/var/mps/log/*" -o -path "*/var/sdc/log/*" -type f -exec zgrep -HinE "$1" {} + 2>/dev/null); [ -n "$MAT" ] && echo "$MAT" || echo "-> No matches."; }
 cs() { cd "/upload/ftp/$1" 2>/dev/null || echo "Usage: cs <case_number>"; }
