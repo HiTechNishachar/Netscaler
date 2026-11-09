@@ -22,10 +22,10 @@ sysinfo() {
     
     local ADM_VER=$(find . -path "*/mps/version.conf" 2>/dev/null | head -n 1)
     local AGENT_VER=$(find . -path "*/var/mps/nstelemetry/version.conf" 2>/dev/null | head -n 1)
-    local ADC_CONF=$(find . -name "ns.conf" -path "*/nsconfig/ns.conf" 2>/dev/null | head -n 1)
     local HW_TYPE="Unknown"
     local SERIAL_NUM=""
     local PLATFORM="Hardware / Unknown Virtualization"
+    local SHOWCMDS=$(find . -name "showcmds.txt" 2>/dev/null | head -n 1)
 
     if [ -n "$ADM_VER" ]; then
         echo "[Type]     : NetScaler Console (ADM)"
@@ -33,39 +33,64 @@ sysinfo() {
     elif [ -n "$AGENT_VER" ]; then
         echo "[Type]     : NetScaler Console Agent"
         echo "[Version]  : $(cat "$AGENT_VER" 2>/dev/null)"
-    elif [ -n "$ADC_CONF" ]; then
+    else
         local BLX_CONF=$(find . -path "*/etc/blx/blx.conf" 2>/dev/null | head -n 1)
         if [ -n "$BLX_CONF" ]; then
             HW_TYPE="BLX"
             echo "[Type]     : NetScaler BLX (Linux BareMetal)"
         else
-            local hw=$(find . -path "*/var/log/messages*" -o -path "*/var/nslog/dmesg*" -exec zgrep -i "NetScaler hardware" {} + 2>/dev/null | head -n 1 | awk -F 'NetScaler hardware ' '{print $2}')
+            # Try to grab hardware from showcmds (show hardware)
+            local hw=""
+            if [ -n "$SHOWCMDS" ]; then
+                hw=$(awk '/^> show hardware/{flag=1; next} /^(>|root@)/{if(flag) {flag=0; exit}} flag' "$SHOWCMDS" 2>/dev/null | grep -i "Platform:" | cut -d ':' -f 2 | xargs)
+            fi
+            
+            # Fallback to dmesg
+            if [ -z "$hw" ]; then
+                hw=$(find . -path "*/var/log/messages*" -o -path "*/var/nslog/dmesg*" -exec zgrep -i "NetScaler hardware" {} + 2>/dev/null | head -n 1 | awk -F 'NetScaler hardware ' '{print $2}')
+            fi
+            
             if echo "$hw" | grep -qi "Virtual"; then HW_TYPE="VPX"
             elif echo "$hw" | grep -qi "SDX"; then HW_TYPE="SDX"
             elif echo "$hw" | grep -qiE "MPX|CPX"; then HW_TYPE="MPX"
             else HW_TYPE="ADC (Unknown form factor)"
             fi
             echo "[Type]     : NetScaler $HW_TYPE"
+            [ -n "$hw" ] && echo "[Model]    : $hw"
         fi
         
-        # 🆕 Fix Version Extraction (Grab exact release from top of ns.conf or showcmds)
-        local ADC_VER=$(head -n 5 "$ADC_CONF" 2>/dev/null | grep -iE "^#.*NetScaler (NS|BLX)[0-9]" | head -n 1 | tr -d '# ')
+        # 🆕 Grab Version exactly from 'show version' in showcmds.txt
+        local ADC_VER=""
+        if [ -n "$SHOWCMDS" ]; then
+             ADC_VER=$(awk '/^> show version/{flag=1; next} /^(>|root@)/{if(flag) {flag=0; exit}} flag' "$SHOWCMDS" 2>/dev/null | grep -i "NetScaler" | head -n 1)
+        fi
+        # Fallback to ns.conf
         if [ -z "$ADC_VER" ]; then
-            ADC_VER=$(find . -name "showcmds.txt" -exec awk '/show version/{getline; print}' {} + 2>/dev/null | head -n 1)
+             local ADC_CONF=$(find . -name "ns.conf" -path "*/nsconfig/ns.conf" 2>/dev/null | head -n 1)
+             ADC_VER=$(head -n 5 "$ADC_CONF" 2>/dev/null | grep -iE "^#.*NetScaler (NS|BLX)[0-9]" | head -n 1 | tr -d '# ')
         fi
-        echo "[Version]  : ${ADC_VER:-Version not found in ns.conf or showcmds}"
-        
-        [ -n "$hw" ] && echo "[Model]    : $hw"
+        echo "[Version]  : ${ADC_VER:-Version not found}"
         
         if [[ "$HW_TYPE" == "MPX" || "$HW_TYPE" == "SDX" ]]; then
             SERIAL_NUM=$(find . -name "showtech_info.out" -exec grep -i "Serial" {} + 2>/dev/null | head -n 1)
+            if [ -z "$SERIAL_NUM" ] && [ -n "$SHOWCMDS" ]; then
+                # Attempt to get serial from show hardware
+                SERIAL_NUM=$(awk '/^> show hardware/{flag=1; next} /^(>|root@)/{if(flag) {flag=0; exit}} flag' "$SHOWCMDS" 2>/dev/null | grep -i "Serial" | head -n 1)
+            fi
             [ -z "$SERIAL_NUM" ] && SERIAL_NUM=$(find . -path "*/var/log/messages*" -exec zgrep -i "Serial Number" {} + 2>/dev/null | head -n 1)
             [ -n "$SERIAL_NUM" ] && echo "[Serial]   : $SERIAL_NUM"
         fi
     fi
     
-    # 🆕 Extract HA State directly into dashboard
-    local HA_STATE=$(find . -name "show_ha.txt" -exec grep -iE "^Node State" {} + 2>/dev/null | head -n 1 | awk -F ':' '{print $2}' | xargs)
+    # 🆕 Extract HA State directly from show ha node in showcmds
+    local HA_STATE=""
+    if [ -n "$SHOWCMDS" ]; then
+        HA_STATE=$(awk '/^> show ha node/{flag=1; next} /^(>|root@)/{if(flag) {flag=0; exit}} flag' "$SHOWCMDS" 2>/dev/null | grep -i "Master State:" | head -n 1 | awk -F ':' '{print $2}' | xargs)
+    fi
+    # Fallback to show_ha.txt
+    if [ -z "$HA_STATE" ]; then
+        HA_STATE=$(find . -name "show_ha.txt" -exec grep -iE "^Node State" {} + 2>/dev/null | head -n 1 | awk -F ':' '{print $2}' | xargs)
+    fi
     [ -n "$HA_STATE" ] && echo "[HA State] : $HA_STATE"
     
     # Platform Detection
@@ -126,27 +151,46 @@ nsips() {
 }
 
 nsha() {
-    echo -e "\n\e[1m=== 🔄 HA NODE STATE ===\e[0m"
-    echo -e "\e[90m[Checking 'show_ha.txt' or telemetry logs for HA state transitions...]\e[0m"
-    local HA_OUT=$(find . -name "show_ha.txt" 2>/dev/null | head -n 1)
-    if [ -n "$HA_OUT" ] && [ -s "$HA_OUT" ]; then 
-        cat "$HA_OUT"
-    else 
-        echo -e "[Proof Cmd]: nsconmsg -K var/nslog/newnslog -d event"
-        local HA_EV=$(find . -name "newnslog" -exec nsconmsg -K {} -d event \; 2>/dev/null | grep -iE "ha_state|remote node|master" | tail -n 10)
-        [ -n "$HA_EV" ] && echo "$HA_EV" || echo " -> No HA state transitions found in newnslog."
+    echo -e "\n\e[1m=== 🔄 HA NODE STATE & SYNC ===\e[0m"
+    local SHOWCMDS=$(find . -name "showcmds.txt" 2>/dev/null | head -n 1)
+    if [ -n "$SHOWCMDS" ]; then
+        echo -e "\e[90m[Parsed from 'show ha node']:\e[0m"
+        awk '/^> show ha node/{flag=1; print; next} /^(>|root@)/{if(flag) {flag=0; exit}} flag' "$SHOWCMDS" 2>/dev/null | head -n 25 || echo " -> 'show ha node' output not found in showcmds."
+        
+        echo -e "\n\e[90m[Parsed from 'show ha syncFailures']:\e[0m"
+        awk '/^> show ha syncFailures/{flag=1; print; next} /^(>|root@)/{if(flag) {flag=0; exit}} flag' "$SHOWCMDS" 2>/dev/null | head -n 15 || echo " -> 'show ha syncFailures' output not found in showcmds."
+    else
+        echo -e "\e[90m[Checking 'show_ha.txt' fallback...]\e[0m"
+        local HA_OUT=$(find . -name "show_ha.txt" 2>/dev/null | head -n 1)
+        if [ -n "$HA_OUT" ] && [ -s "$HA_OUT" ]; then 
+            cat "$HA_OUT"
+        else 
+            echo -e "\n[Proof Cmd]: nsconmsg -K var/nslog/newnslog -d event"
+            local HA_EV=$(find . -name "newnslog" -exec nsconmsg -K {} -d event \; 2>/dev/null | grep -iE "ha_state|remote node|master" | tail -n 10)
+            [ -n "$HA_EV" ] && echo "$HA_EV" || echo " -> No HA state transitions found in newnslog."
+        fi
     fi
 }
 
 nslic() {
     echo -e "\n\e[1m=== 🔑 LICENSE AUDIT (LAS & Legacy) ===\e[0m"
     echo -e "\e[90m[Checking 'show ns license' output in collector...]\e[0m"
-    local LIC_CMD=$(find . -name "showcmds.txt" -o -name "show_ns_license.txt" 2>/dev/null | head -n 1)
-    if [ -n "$LIC_CMD" ]; then
-        local LIC_OUT=$(awk '/show (ns )?license/{flag=1; print; next} /^(>|root@|show )/{if(flag) {flag=0; exit}} flag' "$LIC_CMD" 2>/dev/null | head -n 30)
-        [ -n "$LIC_OUT" ] && echo "$LIC_OUT" || echo " -> License command output not found in showcmds.txt."
+    local SHOWCMDS=$(find . -name "showcmds.txt" 2>/dev/null | head -n 1)
+    
+    if [ -n "$SHOWCMDS" ]; then
+        echo -e "\n[show ns license]:"
+        local LIC_OUT=$(awk '/^> show ns license$/{flag=1; print; next} /^(>|root@)/{if(flag) {flag=0; exit}} flag' "$SHOWCMDS" 2>/dev/null | head -n 30)
+        [ -n "$LIC_OUT" ] && echo "$LIC_OUT" || echo " -> 'show ns license' command output not found in showcmds.txt."
+        
+        echo -e "\n[show ns licenseparameters]:"
+        local LIC_PARAM=$(awk '/^> show ns licenseparameters/{flag=1; print; next} /^(>|root@)/{if(flag) {flag=0; exit}} flag' "$SHOWCMDS" 2>/dev/null | head -n 15)
+        [ -n "$LIC_PARAM" ] && echo "$LIC_PARAM" || echo " -> 'show ns licenseparameters' output not found."
+        
+        echo -e "\n[show ns licenseservers]:"
+        local LIC_SVR=$(awk '/^> show ns licenseservers/{flag=1; print; next} /^(>|root@)/{if(flag) {flag=0; exit}} flag' "$SHOWCMDS" 2>/dev/null | head -n 15)
+        [ -n "$LIC_SVR" ] && echo "$LIC_SVR" || echo " -> 'show ns licenseservers' output not found."
     else
-        echo " -> No 'show license' command output found in bundle."
+        echo " -> No showcmds.txt found in bundle to extract license status."
     fi
     
     echo -e "\n\e[90m[Checking for legacy .lic files (Can cause conflicts!)]\e[0m"
@@ -201,11 +245,12 @@ nstriage() {
         
         local VAR_AVAIL=$(awk '$NF=="/var" {print $4}' "$DISK_FILE" 2>/dev/null)
         if [ -n "$VAR_AVAIL" ]; then
-            local VAR_VAL=$(echo "$VAR_AVAIL" | grep -oE "[0-9]+")
+            # Strip decimal points for bash integer comparison (e.g. 5.8G -> 5)
+            local VAR_VAL=$(echo "$VAR_AVAIL" | grep -oE "[0-9]+" | head -n 1)
             local VAR_UNIT=$(echo "$VAR_AVAIL" | grep -oE "[A-Za-z]+")
             
             if [[ "$VAR_UNIT" == "G" || "$VAR_UNIT" == "GB" ]]; then
-                if [ "$VAR_VAL" -lt 7 ]; then
+                if [ -n "$VAR_VAL" ] && [ "$VAR_VAL" -lt 7 ]; then
                    echo -e "\e[31m -> ⚠️ WARNING: /var has less than 7GB free ($VAR_AVAIL remaining).\e[0m"
                 else
                    echo " -> /var Space: OK ($VAR_AVAIL available)."
@@ -220,7 +265,7 @@ nstriage() {
         echo " -> Disk log not found."
     fi
     
-    local CORES=$(find . -type d \( -name "crash" -o -name "core" \) -exec ls -latr {} + 2>/dev/null | grep -v "^total")
+    local CORES=$(find . -type f -path "*/var/crash/*" -o -path "*/var/core/*" -exec ls -lah {} + 2>/dev/null | grep -v "directory_listing.txt")
     [ -n "$CORES" ] && echo "$CORES" || echo " -> Core Dumps: None found."
     
     local BOOT_EV=$(find . -path "*/var/log/messages*" -o -path "*/var/nslog/dmesg*" -exec zgrep -HinE "booting|FreeBSD|panic|core dumped" {} + 2>/dev/null | tail -n 5)
@@ -316,7 +361,7 @@ nssec() {
     [ -n "$LPOINT" ] && echo "$LPOINT" || echo " -> Clean."
     
     echo -e "\n\e[1m=== 🔐 MANAGEMENT LOGINS (SSH/GUI) ===\e[0m"
-    echo -e "\e[90m\e[0m"
+    echo -e "\e[90m[Source: var/log/auth.log* | Top 10 Failed/Success Accounts & IPs]\e[0m"
     local AUTH=$(find . -path "*/var/log/auth.log*")
     if [ -n "$AUTH" ]; then
         echo -e "\n[FAILED Attempts (Count | User/IP)]:"
@@ -331,7 +376,7 @@ nssec() {
     fi
 
     echo -e "\n\e[1m=== 🌍 GATEWAY / AAA VPN LOGINS ===\e[0m"
-    echo -e "\e[90m\e[0m"
+    echo -e "\e[90m[Source: var/log/ns.log* | Top 10 Failed AAA Logins]\e[0m"
     local NSLOG=$(find . -path "*/var/log/ns.log*")
     if [ -n "$NSLOG" ]; then
         local VPN_FAIL=$(zgrep -i "LOGIN_FAILED" $NSLOG 2>/dev/null | grep -oE "User [^ ]+ - Client_ip [0-9\.]+" | sort | uniq -c | sort -nr | head -n 10)
