@@ -16,106 +16,92 @@ alias csh='source ~/.bashrc'
 # 2. SYSTEM DASHBOARD & TOPOLOGY
 # --------------------------------------------------------------------
 sysinfo() {
-    echo -e "\\n\\e[1m=======================================================================\\e[0m"
-    echo -e "\\e[1m [SYSTEM INFORMATION DASHBOARD] \\e[0m"
-    echo -e "\\e[1m=======================================================================\\e[0m"
+    echo -e "\n\e[1m=======================================================================\e[0m"
+    echo -e "\e[1m  SYSTEM INFORMATION DASHBOARD \e[0m"
+    echo -e "\e[1m=======================================================================\e[0m"
     
     local ADM_VER=$(find . -path "*/mps/version.conf" 2>/dev/null | head -n 1)
     local AGENT_VER=$(find . -path "*/var/mps/nstelemetry/version.conf" 2>/dev/null | head -n 1)
-    local HW_TYPE="Unknown"
-    local PLATFORM="Hardware / Unknown Virtualization"
-    local SERIAL_NUM=""
-    local ADC_VER=""
+    local UNAME=$(find . -name "uname-a.out" 2>/dev/null | head -n 1)
     
-    local SHOWCMDS=$(find . -name "showcmds.txt" 2>/dev/null | head -n 1)
-    local ADC_CONF=$(find . -name "ns.conf" 2>/dev/null | grep "nsconfig/ns.conf" | head -n 1)
-
     if [ -n "$ADM_VER" ]; then
         echo "[Type]     : NetScaler Console (ADM)"
-        echo "[Version]  : $(cat "$ADM_VER" 2>/dev/null | tr -d '\\r')"
+        echo "[Version]  : $(cat "$ADM_VER" 2>/dev/null | tr -d '\r')"
     elif [ -n "$AGENT_VER" ]; then
         echo "[Type]     : NetScaler Console Agent"
-        echo "[Version]  : $(cat "$AGENT_VER" 2>/dev/null | tr -d '\\r')"
+        echo "[Version]  : $(cat "$AGENT_VER" 2>/dev/null | tr -d '\r')"
     else
-        local BLX_CONF=$(find . -path "*/etc/blx/blx.conf" 2>/dev/null | head -n 1)
-        if [ -n "$BLX_CONF" ]; then
+        # 1. Determine OS (FreeBSD vs BLX)
+        local HW_TYPE="Unknown form factor"
+        local IS_BLX=0
+        if [ -n "$UNAME" ] && grep -qi "Linux" "$UNAME" 2>/dev/null; then
+            IS_BLX=1
             HW_TYPE="BLX"
-            echo "[Type]     : NetScaler BLX (Linux BareMetal)"
-        else
-            # Hardware Detection
-            local hw=""
-            if [ -n "$SHOWCMDS" ]; then
-                hw=$(grep -iA 10 "show hardware" "$SHOWCMDS" 2>/dev/null | grep -i "Platform:" | head -n 1 | cut -d ':' -f 2 | tr -d '\\r' | xargs)
-            fi
-            if [ -z "$hw" ]; then
-                hw=$(find . -path "*/var/log/messages*" -o -path "*/var/nslog/dmesg*" -exec zgrep -i "NetScaler hardware" {} + 2>/dev/null | head -n 1 | awk -F 'NetScaler hardware ' '{print $2}' | tr -d '\\r' | xargs)
+        fi
+
+        # 2. Identify the Hardware Platform (VPX, MPX, SDX) & 3. Serial Number
+        local PLATFORM="Unknown Platform"
+        local SERIAL_NUM=""
+        local DMI=$(find . -name "dmidecode.out" 2>/dev/null | head -n 1)
+
+        if [ $IS_BLX -eq 1 ]; then
+            PLATFORM="Linux BareMetal"
+        elif [ -n "$DMI" ]; then
+            local PROD_NAME=$(grep -iA 4 "System Information" "$DMI" 2>/dev/null | grep -i "Product Name:" | cut -d ':' -f 2 | xargs)
+            local MANUF=$(grep -iA 4 "System Information" "$DMI" 2>/dev/null | grep -i "Manufacturer:" | cut -d ':' -f 2 | xargs)
+            
+            if echo "$PROD_NAME$MANUF" | grep -qiE "Amazon|Microsoft|VMware|Virtual|HVM|KVM|Xen"; then
+                HW_TYPE="VPX"
+            elif echo "$PROD_NAME" | grep -qi "SDX"; then
+                HW_TYPE="SDX"
+            elif echo "$PROD_NAME" | grep -qi "MPX"; then
+                HW_TYPE="MPX"
+            elif [ -n "$PROD_NAME" ]; then
+                HW_TYPE="ADC Hardware"
             fi
             
-            if echo "$hw" | grep -qi "Virtual"; then HW_TYPE="VPX"
-            elif echo "$hw" | grep -qi "SDX"; then HW_TYPE="SDX"
-            elif echo "$hw" | grep -qiE "MPX|CPX"; then HW_TYPE="MPX"
-            else HW_TYPE="ADC (Unknown form factor)"
-            fi
-            echo "[Type]     : NetScaler $HW_TYPE"
-            [ -n "$hw" ] && echo "[Model]    : $hw"
+            [ -n "$PROD_NAME" ] && PLATFORM="$PROD_NAME"
+            [ -n "$MANUF" ] && PLATFORM="$PLATFORM ($MANUF)"
+
+            SERIAL_NUM=$(grep -i "Serial Number" "$DMI" 2>/dev/null | head -n 1 | cut -d ':' -f 2 | xargs)
         fi
-        
-        # Version Detection (1. ns.conf line 1 -> 2. show version fallback)
+
+        # 4. Extract Host ID (For Licensing)
+        local HOST_ID=""
+        local IFCONF=$(find . -name "ifconfig-a.out" 2>/dev/null | head -n 1)
+        if [ -n "$IFCONF" ]; then
+            HOST_ID=$(grep -i "ether" "$IFCONF" 2>/dev/null | head -n 1 | awk '{print $2}' | sed 's/://g' | xargs | tr 'a-z' 'A-Z')
+        fi
+
+        # 5. Find NetScaler Firmware Version
+        local ADC_VER=""
+        local ADC_CONF=$(find . -type f -name "ns.conf" 2>/dev/null | grep "/nsconfig/ns.conf" | head -n 1)
         if [ -n "$ADC_CONF" ]; then
-            ADC_VER=$(head -n 1 "$ADC_CONF" 2>/dev/null | grep "^#" | tr -d '#\\r' | xargs)
+            ADC_VER=$(head -n 2 "$ADC_CONF" 2>/dev/null | grep -iE "^#.*(NS|BLX|NetScaler).*Build" | head -n 1 | tr -d '#\r' | xargs)
         fi
-        if [ -z "$ADC_VER" ] && [ -n "$SHOWCMDS" ]; then
-            ADC_VER=$(grep -iA 5 "show version" "$SHOWCMDS" 2>/dev/null | grep -i "NetScaler" | head -n 1 | tr -d '\\r' | xargs)
-        fi
-        echo "[Version]  : ${ADC_VER:-Version not found}"
-        
-        # Serial Number Extraction (Primary for MPX/SDX, print if available for VPX)
-        if [ -n "$SHOWCMDS" ]; then
-            SERIAL_NUM=$(grep -iA 15 "show hardware" "$SHOWCMDS" 2>/dev/null | grep -i "Serial no:" | head -n 1 | cut -d ':' -f 2 | tr -d '\\r' | xargs)
-        fi
-        if [ -z "$SERIAL_NUM" ]; then
-            SERIAL_NUM=$(find . -name "showtech_info.out" -exec grep -i "Serial" {} + 2>/dev/null | head -n 1 | cut -d ':' -f 2 | tr -d '\\r' | xargs)
-        fi
-        if [ -z "$SERIAL_NUM" ]; then
-            SERIAL_NUM=$(find . -path "*/var/log/messages*" -exec zgrep -i "Serial Number" {} + 2>/dev/null | head -n 1 | sed -n 's/.*Serial Number //p' | tr -d '\\r' | xargs)
-        fi
+
+        # Output the extracted ADC details
+        echo "[Type]     : NetScaler $HW_TYPE"
+        echo "[Version]  : ${ADC_VER:-Version not found in ns.conf}"
+        echo "[Platform] : $PLATFORM"
         [ -n "$SERIAL_NUM" ] && echo "[Serial]   : $SERIAL_NUM"
+        [ -n "$HOST_ID" ] && echo "[Host ID]  : $HOST_ID"
     fi
     
     # Extract HA State
     local HA_STATE=""
+    local SHOWCMDS=$(find . -name "showcmds.txt" 2>/dev/null | head -n 1)
     if [ -n "$SHOWCMDS" ]; then
-        HA_STATE=$(grep -iA 5 "show ha node" "$SHOWCMDS" 2>/dev/null | grep -i "Master State:" | head -n 1 | cut -d ':' -f 2 | tr -d '\\r' | xargs)
+        HA_STATE=$(grep -iA 5 "show ha node" "$SHOWCMDS" 2>/dev/null | grep -i "Master State:" | head -n 1 | cut -d ':' -f 2 | tr -d '\r' | xargs)
     fi
     if [ -z "$HA_STATE" ]; then
-        HA_STATE=$(find . -type f -name "show_ha.txt" -exec grep -iE "^Node State" {} + 2>/dev/null | head -n 1 | cut -d ':' -f 2 | tr -d '\\r' | xargs)
+        HA_STATE=$(find . -type f -name "show_ha.txt" -exec grep -iE "^Node State" {} + 2>/dev/null | head -n 1 | cut -d ':' -f 2 | tr -d '\r' | xargs)
     fi
     [ -n "$HA_STATE" ] && echo "[HA State] : $HA_STATE"
-    
-    # Platform Detection
-    local DMI=$(find . -name "dmidecode.out" 2>/dev/null | head -n 1)
-    if [ -n "$DMI" ]; then
-        if grep -qi "Amazon" "$DMI"; then PLATFORM="AWS (Amazon EC2)"
-        elif grep -qiE "Microsoft|Hyper-V" "$DMI"; then PLATFORM="Azure / Hyper-V"
-        elif grep -qi "VMware" "$DMI"; then PLATFORM="VMware (ESXi)"
-        elif grep -qiE "QEMU|KVM|Nutanix|Acropolis" "$DMI"; then PLATFORM="KVM / Nutanix / Proxmox"
-        elif grep -qi "Xen" "$DMI"; then PLATFORM="Citrix Hypervisor (XenServer)"
-        fi
-    fi
-    
-    local OS_RELEASE=$(find . -name "os-release.out" 2>/dev/null | head -n 1)
-    local UNAME=$(find . -name "uname-a.out" 2>/dev/null | head -n 1)
-    if [ -n "$OS_RELEASE" ]; then
-        local PRETTY_NAME=$(grep "^PRETTY_NAME=" "$OS_RELEASE" | cut -d '=' -f 2 | tr -d '"')
-        [ -n "$PRETTY_NAME" ] && PLATFORM="BLX on $PRETTY_NAME"
-    elif [ -n "$UNAME" ] && grep -qi "Linux" "$UNAME"; then 
-        PLATFORM="NetScaler BLX (Linux BareMetal)"
-    fi
-    echo "[Platform] : $PLATFORM"
-    
+
     local UPTIME=$(find . -name "uptime.out" 2>/dev/null | head -n 1)
-    [ -n "$UNAME" ] && echo "[Kernel]   : $(cat "$UNAME" 2>/dev/null | tr -d '\\r')"
-    [ -n "$UPTIME" ] && echo "[Uptime]   : $(cat "$UPTIME" 2>/dev/null | tr -d '\\r')"
+    [ -n "$UNAME" ] && echo "[Kernel]   : $(cat "$UNAME" 2>/dev/null | tr -d '\r')"
+    [ -n "$UPTIME" ] && echo "[Uptime]   : $(cat "$UPTIME" 2>/dev/null | tr -d '\r')"
     echo "-----------------------------------------------------------------------"
     
     local SYSCTL=$(find . -name "sysctl-a.out" 2>/dev/null | head -n 1)
@@ -125,7 +111,7 @@ sysinfo() {
         local cpu=$(grep -i "hw.ncpu" "$SYSCTL" 2>/dev/null | grep -o '[0-9]*' | head -n 1)
         [ -n "$cpu" ] && echo "[CPUs]     : $cpu allocated"
     fi
-    echo -e "\\e[1m=======================================================================\\e[0m"
+    echo -e "\e[1m=======================================================================\e[0m"
 }
 
 nsips() {
