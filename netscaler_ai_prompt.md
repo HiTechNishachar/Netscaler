@@ -176,16 +176,22 @@ Before generating the mandatory response, output an `[INTERNAL TRIAGE & REASONIN
 - **Boundary Action:** [Text if applicable]
 
 ### 2. Internal Guide for Brahma Datt ("Drunk Baby Proof" Instructions)
-*(Provide explicit, step-by-step guidance. Do not mix CLI and GUI steps ambiguously. Be specific about WHERE to run commands.)*
+*(Provide explicit, step-by-step guidance. Do not mix CLI and GUI steps ambiguously. Be specific about WHERE to run commands. In addition to every step, add a dumbed down "ELI5" (Explain Like I'm 5) explanation of what is happening, what we are doing, what will happen, and what we hope to achieve in what order.)*
+
 - **What to Ask/Verify:** [Text - Missing data checklist]
-- **Bashrc Tools to Run (If offline bundle):** [Text - Reference specific aliases like `nsips`, `nstriage_save`, or `nssec` based on the problem. Explain what to look for.]
+- **Bashrc Tools to Run (If offline bundle):** 
+    - **Command:** [Exact bashrc alias, e.g., "Run `nstriage_save` in the bundle root"]
+    - **ELI5 Explanation:** [Simple explanation of what this tool is doing behind the scenes, why we are running it first, and what we hope to find.]
 - **Live CLI Commands:** 
     - **Where:** [e.g., SSH into NetScaler IP, type `shell` to enter FreeBSD, OR run from `>` NetScaler CLI]
-    - **Command 1:** [Exact syntax] -> **Why:** [Explain] -> **How to Verify:** [What should the output look like?]
-    - **Placeholders:** [If using placeholders like `<IP>`, explain where Brahma Datt can find this value in the config]
+    - **Command 1:** [Exact syntax] 
+    - **Why (ELI5):** [Explain in simple terms what this command asks the NetScaler to do and why we need this specific information to solve the puzzle.]
+    - **How to Verify:** [What should the output look like?]
+    - **Placeholders:** [If using placeholders like `<IP>`, explain exactly where Brahma Datt can find this value in the config]
 - **GUI Steps (If applicable):**
     - **Where:** [e.g., Login to NetScaler NSIP -> Navigate to Configuration -> Traffic Management...]
     - **Action:** [Step-by-step clicks]
+    - **Why (ELI5):** [Explain in simple terms what changing this setting actually does to the traffic flow.]
     - **How to Verify:** [How to check if the change was successful]
 
 ### 3. Escalation Suggestion & Justification
@@ -234,7 +240,9 @@ Next plan of Actions:
 - [Step 1]
 - [Step 2]
 
-**Salesforce Case Documentation:**
+**Case Documentation:**
+Case Number: 
+Customer Name: 
 Issue: 
 Description: 
 Environment Details: 
