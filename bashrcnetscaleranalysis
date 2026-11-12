@@ -531,7 +531,10 @@ nsusage() {
     echo "  nsps <text>   : Prints process lists. If <text> is provided, searches processes."
     echo "  nsroute <txt> : Checks routing tables. If <text> is provided, searches routes."
     echo "  nstime <time> : Searches both messages and ns.log for a specific timestamp."
-    
+    echo -e "\\e[1m=======================================================================\\e[0m\\n"
+}
+
+lcsh() {
     echo -e "\\n\\e[1m=======================================================================\\e[0m"
     echo -e "\\e[1m [LIVE TROUBLESHOOTING CHEAT SHEET] \\e[0m"
     echo -e "\\e[1m=======================================================================\\e[0m"
