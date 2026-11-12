@@ -9,8 +9,9 @@ Whether you are analyzing a 5GB offline support bundle or engaging a customer on
 ## 📂 Repository Contents
 
 1. **`bashrcnetscaleranalysis`** - The custom bash profile. Drop this into your collector bundle analysis environment to unlock the magic commands.
-2. **`netscaler_ai_prompt.md`** - The master AI persona prompt. It instructs your AI assistant on how to analyze data, enforce support boundaries, and format customer-facing responses.
-3. **`directorystructureoflogs.txt`** - Sanitized directory structures for ADC, ADM Console, ADM Agent, and BLX bundles to help train the AI on where to find specific logs.
+2. **`NetscalerNewCasePrompt.md`** - The master AI persona prompt. It instructs your AI assistant on how to analyze data, enforce support boundaries, and format customer-facing responses.
+3. **`BundleDropPrompt.md`** - The specialized AI prompt for offline analysis. It tells the AI you've extracted a bundle and instructs it to guide you using your specific bashrc tools.
+4. **`directorystructureoflogs.txt`** - Sanitized directory structures for ADC, ADM Console, ADM Agent, and BLX bundles to help train the AI on where to find specific logs.
 
 ---
 
@@ -59,7 +60,7 @@ This bashrc is designed to turn 30 minutes of manual log grepping into 5 seconds
 
 ## 🧠 Part 2: The AI Prompt Architecture (The Brain)
 
-The `netscaler_ai_prompt.md` is designed to force Large Language Models into the persona of a hyper-disciplined Senior Escalation Engineer acting as a mentor. 
+The `NetscalerNewCasePrompt.md` and `BundleDropPrompt.md` files are designed to force Large Language Models into the persona of a hyper-disciplined Senior Escalation Engineer acting as a mentor. 
 
 ### Core Design Principles
 1.  **Drunk Baby Proof Instructions:** The AI is strictly trained to provide explicit, simple steps (ELI5 - Explain Like I'm 5). It tells you exactly *where* to run a command (e.g., NetScaler CLI vs. FreeBSD shell) and *why* you are running it.
