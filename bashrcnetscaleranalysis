@@ -414,10 +414,9 @@ nsnotice() {
     [ -n "$NO" ] && echo "$NO" || echo " -> None found."
 }
 nswaf() {
-    echo -e "\\n\\e[1m[Hunting AppFW & Bot Blocks in /var/log/ns.log*...]\\e[0m"
-    local WA=$(find . -path "*/var/log/ns.log*" -exec zgrep -HinE "APPFW|BOT" {} + 2>/dev/null)
-    [ -n "$WA" ] && echo "$WA" || echo " -> None found."
-}
+     echo -e "\\n\\e[1m[Hunting AppFW & Bot Blocks in /var/log/ns.log*...]\\e[0m"
+     find . -path "*/var/log/ns.log*" -exec zgrep -HinE "APPFW|BOT" {} + 2>/dev/null
+ }
 nsauth() {
     echo -e "\\n\\e[1m[Hunting AAA, SAML & LDAP Logins in /var/log/ns.log*...]\\e[0m"
     local AU=$(find . -path "*/var/log/ns.log*" -exec zgrep -HinE "AAA|SAML|LDAP|LOGIN|EPA" {} + 2>/dev/null)
